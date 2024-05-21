@@ -1,0 +1,70 @@
+version: '3'
+services:
+  db:
+    image: mysql
+    container_name: db
+    environment:
+      - MYSQL_DATABASE=${DB_NAME}
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASS}
+      - MYSQL_ROOT_PASSWORD=${DB_PASS}
+      - TZ=${TZ}
+    ports:
+      - '3306:3306'
+    volumes:
+      - ./db/mysql:/var/lib/mysql
+    networks:
+      backend:
+        ipv4_address: 172.28.1.5
+
+  express:
+    image: node
+    container_name: express
+    environment:
+      - MYSQL_SERVER=db
+      - MYSQL_USER=${DB_USER}
+      - MYSQL_PASSWORD=${DB_PASS}
+      - MYSQL_DATABASE=${DB_NAME}
+      - TZ=${TZ}
+      - CHOKIDAR_USEPOLLING=true
+    tty: true
+    ports:
+      - '8000:8000'
+    volumes:
+      - ./express:/app
+    working_dir: /app
+    # command: npm ci && npm audit fix && npm run start
+    networks:
+      backend:
+        ipv4_address: 172.28.1.10
+    depends_on:
+      - db
+
+  react:
+    image: node
+    container_name: react
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    tty: true
+    ports:
+      - '5173:5173'
+      - '3000:3000'
+    volumes:
+      - ./react:/app
+    working_dir: /app
+    # command: bash -c 'npm install && npm run build && npm run dev'
+    networks:
+      - backend
+    depends_on:
+      - express
+
+networks:
+  backend:
+    driver: bridge
+    name: app_network
+    ipam:
+      config:
+        - subnet: 172.28.1.0/24
+
+volumes:
+  mysql_data:
