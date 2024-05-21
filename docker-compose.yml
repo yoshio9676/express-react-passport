@@ -21,6 +21,7 @@ services:
     image: node
     container_name: express
     environment:
+      - MYSQL_HOST=db
       - MYSQL_SERVER=db
       - MYSQL_USER=${DB_USER}
       - MYSQL_PASSWORD=${DB_PASS}
